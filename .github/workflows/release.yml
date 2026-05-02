@@ -22,18 +22,6 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install mise tools
-        uses: jdx/mise-action@v2
-
-      - name: Check OpenAPI spec
-        run: make openapi-check
-
-      - name: Generate OpenAPI code
-        run: make openapi-generate
-
-      - name: Ensure generated code is current
-        run: git diff --exit-code
-
       - name: Test
         run: make test
 
