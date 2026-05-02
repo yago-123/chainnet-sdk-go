@@ -34,6 +34,20 @@ func (c *Client) RawClient() *generated.ClientWithResponses {
 	return c.client
 }
 
+func (c *Client) GetLatestChain(ctx context.Context) (*ChainTip, error) {
+	resp, err := c.client.GetLatestChainWithResponse(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest chain metadata: %w", err)
+	}
+
+	tip, err := expectOK("get latest chain metadata", resp.StatusCode(), resp.Body, resp.JSON200)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tip, nil
+}
+
 func (c *Client) GetAddressUTXOs(ctx context.Context, address []byte) ([]UTXO, error) {
 	return c.GetAddressUTXOsByAddress(ctx, base58.Encode(address))
 }
