@@ -104,6 +104,9 @@ type ClientInterface interface {
 	// GetBlockByHash request
 	GetBlockByHash(ctx context.Context, hash BlockHash, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLatestChain request
+	GetLatestChain(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHeaders request
 	GetHeaders(ctx context.Context, params *GetHeadersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -172,6 +175,18 @@ func (c *Client) GetLatestBlock(ctx context.Context, reqEditors ...RequestEditor
 
 func (c *Client) GetBlockByHash(ctx context.Context, hash BlockHash, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetBlockByHashRequest(c.Server, hash)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetLatestChain(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLatestChainRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -400,6 +415,33 @@ func NewGetBlockByHashRequest(server string, hash BlockHash) (*http.Request, err
 	}
 
 	operationPath := fmt.Sprintf("/blocks/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetLatestChainRequest generates requests for GetLatestChain
+func NewGetLatestChainRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/chain/latest")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -675,6 +717,9 @@ type ClientWithResponsesInterface interface {
 	// GetBlockByHashWithResponse request
 	GetBlockByHashWithResponse(ctx context.Context, hash BlockHash, reqEditors ...RequestEditorFn) (*GetBlockByHashResponse, error)
 
+	// GetLatestChainWithResponse request
+	GetLatestChainWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetLatestChainResponse, error)
+
 	// GetHeadersWithResponse request
 	GetHeadersWithResponse(ctx context.Context, params *GetHeadersParams, reqEditors ...RequestEditorFn) (*GetHeadersResponse, error)
 
@@ -808,6 +853,30 @@ func (r GetBlockByHashResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetBlockByHashResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetLatestChainResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ChainTip
+	JSON404      *NotFound
+	JSON500      *InternalError
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLatestChainResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLatestChainResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -978,6 +1047,15 @@ func (c *ClientWithResponses) GetBlockByHashWithResponse(ctx context.Context, ha
 		return nil, err
 	}
 	return ParseGetBlockByHashResponse(rsp)
+}
+
+// GetLatestChainWithResponse request returning *GetLatestChainResponse
+func (c *ClientWithResponses) GetLatestChainWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetLatestChainResponse, error) {
+	rsp, err := c.GetLatestChain(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLatestChainResponse(rsp)
 }
 
 // GetHeadersWithResponse request returning *GetHeadersResponse
@@ -1220,6 +1298,46 @@ func ParseGetBlockByHashResponse(rsp *http.Response) (*GetBlockByHashResponse, e
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetLatestChainResponse parses an HTTP response from a GetLatestChainWithResponse call
+func ParseGetLatestChainResponse(rsp *http.Response) (*GetLatestChainResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLatestChainResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ChainTip
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest NotFound

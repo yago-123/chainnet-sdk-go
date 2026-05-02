@@ -34,6 +34,18 @@ type BlockHeader struct {
 	Version string `json:"version"`
 }
 
+// ChainTip defines model for ChainTip.
+type ChainTip struct {
+	// Hash Hex-encoded latest block hash.
+	Hash string `json:"hash"`
+
+	// Height Latest block height.
+	Height int `json:"height"`
+
+	// Timestamp Latest block timestamp.
+	Timestamp int64 `json:"timestamp"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	// Code Stable machine-readable error code.
