@@ -1,0 +1,34 @@
+name: Go
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install mise tools
+        uses: jdx/mise-action@v2
+
+      - name: Check OpenAPI spec
+        run: make openapi-check
+
+      - name: Generate OpenAPI code
+        run: make openapi-generate
+
+      - name: Ensure generated code is current
+        run: git diff --exit-code
+
+      - name: Test
+        run: make test
