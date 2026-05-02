@@ -4,6 +4,7 @@ import "github.com/yago-123/chainnet-sdk-go/v1beta/generated"
 
 type Block = generated.Block
 type BlockHeader = generated.BlockHeader
+type ChainTip = generated.ChainTip
 type ErrorResponse = generated.ErrorResponse
 type Transaction = generated.Transaction
 type TxInput = generated.TxInput
