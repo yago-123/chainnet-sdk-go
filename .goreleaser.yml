@@ -2,7 +2,8 @@ version: 2
 
 project_name: chainnet-sdk-go
 
-builds: []
+builds:
+  - skip: true
 archives: []
 checksum:
   disable: true
