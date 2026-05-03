@@ -1,5 +1,4 @@
 # Chainnet SDK Go
-
 ## Releases
 
 `chainnet-sdk-go` versioning is independent from `chainnet`. Tag SDK releases based on the Go client impact, not the server
