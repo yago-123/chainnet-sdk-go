@@ -18,6 +18,14 @@ test:
 	@echo "Running SDK tests..."
 	@go test ./...
 
+.PHONY: lint
+lint:
+	@echo "Running linters..."
+	@golangci-lint run ./...
+
 .PHONY: fmt
 fmt:
 	@go fmt ./...
+
+.PHONY: ci
+ci: test lint
