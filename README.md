@@ -1,4 +1,12 @@
 # Chainnet SDK Go
+## Releases
+
+`chainnet-sdk-go` versioning is independent from `chainnet`. Tag SDK releases based on the Go client impact, not the server
+version, and push tags matching `v*` to trigger GitHub Releases automatically.
+
+Version upgrades follow SDK semver from the Go consumer point of view: patch for non-breaking fixes, minor for backward-compatible
+additions, and major for breaking public API changes. While the SDK remains in `v0.x`, release notes should still call
+out breaking changes explicitly.
 
 ## Usage
 

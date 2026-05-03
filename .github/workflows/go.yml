@@ -13,10 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
+      - name: Install tools
+        uses: jdx/mise-action@v2
 
-      - name: Test
-        run: make test
+      - name: CI
+        run: make ci

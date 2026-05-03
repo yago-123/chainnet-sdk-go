@@ -1,0 +1,20 @@
+version: 2
+
+project_name: chainnet-sdk-go
+
+builds: []
+archives: []
+checksum:
+  disable: true
+changelog:
+  use: git
+release:
+  prerelease: auto
+  make_latest: "{{ if .Prerelease }}false{{ else }}true{{ end }}"
+  footer: |
+    ## Upgrade guidance
+
+    - Patch releases contain fixes that should not break the public Go API.
+    - Minor releases add SDK functionality in a backward-compatible way.
+    - Major releases may include breaking changes and should be reviewed before upgrading.
+    - If the SDK is still in `v0.x`, treat version upgrades carefully and review release notes for explicit breaking changes.
